@@ -51,12 +51,7 @@ const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
 const accounts = [account1, account2, account3, account4];
 const eurToUsd = 1.1;
 const movementsUSDfor = [];
-// Lectures
-const currencies = new Map([
-    ['USD', 'United States dollar'],
-    ['EUR', 'Euro'],
-    ['GBP', 'Pound sterling'],
-]);
+let currentAccount;
 //Username
 const createUsernames = function (accs) {
     accs.forEach(function (acc) {
@@ -76,19 +71,51 @@ const displayMovements = function (movements) {
         const html = `
     <div class="movements__row">
           <div class="movements__type movements__type--${type}">${i + 1} ${type}</div>
-          <div class="movements__value">${mov}</div>
+          <div class="movements__value">${mov}€</div>
         </div>
     `;
         containerMovements.insertAdjacentHTML('afterbegin', html);
     });
 };
-displayMovements(account1.movements);
 // Balance calculation
 const calcDisplayBalance = function (movements) {
     const balance = movements.reduce((acc, cur) => acc + cur, 0);
-    labelBalance.textContent = `${balance} EUR`;
+    labelBalance.textContent = `${balance} €`;
 };
-calcDisplayBalance(account1.movements);
+//Summary calculation
+const calcDisplaySummary = function (acc) {
+    const incomes = acc.movements
+        .filter(mov => mov > 0)
+        .reduce((acc, mov) => acc + mov, 0);
+    labelSumIn.textContent = `${incomes} €`;
+    const out = acc.movements
+        .filter(mov => mov < 0)
+        .reduce((acc, cur) => acc + cur, 0);
+    labelSumOut.textContent = `${Math.abs(out)} €`;
+    const interest = acc.movements
+        .filter(mov => mov > 0)
+        .map(deposit => (deposit * acc.interestRate) / 100)
+        .filter((int, i, arr) => {
+        return int >= 1;
+    })
+        .reduce((acc, int) => acc + int, 0);
+    labelSumInterest.textContent = `${Math.abs(interest)} €`;
+};
+// Event handler
+btnLogin.addEventListener('click', function (e) {
+    e.preventDefault(); //zapobiega odświeżaniu się strony po naciśnięciu buttona
+    currentAccount = accounts.find(acc => acc.username === inputLoginUsername.value);
+    console.log(currentAccount);
+    if ((currentAccount === null || currentAccount === void 0 ? void 0 : currentAccount.pin) === Number(inputLoginPin.value)) {
+        labelWelcome.textContent = `Welcome back, ${currentAccount.owner.split(' ')[0]}`;
+        containerApp.style.opacity = 100;
+        inputLoginUsername.value = inputLoginPin.value = '';
+        inputLoginPin.blur();
+        displayMovements(currentAccount.movements);
+        calcDisplayBalance(currentAccount.movements);
+        calcDisplaySummary(currentAccount);
+    }
+});
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // EUR to USD
 const movementsUSD = movements.map(mov => mov * eurToUsd);

@@ -57,7 +57,7 @@ const account4 = {
 
 //Variables
 
-const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+const movements: number[] = [200, 450, -400, 3000, -650, -130, 70, 1300];
 
 const accounts = [account1, account2, account3, account4];
 
@@ -65,13 +65,7 @@ const eurToUsd: number = 1.1;
 
 const movementsUSDfor: number[] = [];
 
-// Lectures
-
-const currencies = new Map([
-  ['USD', 'United States dollar'],
-  ['EUR', 'Euro'],
-  ['GBP', 'Pound sterling'],
-]);
+let currentAccount;
 
 //Username
 
@@ -100,7 +94,7 @@ const displayMovements = function (movements) {
           <div class="movements__type movements__type--${type}">${
       i + 1
     } ${type}</div>
-          <div class="movements__value">${mov}</div>
+          <div class="movements__value">${mov}€</div>
         </div>
     `;
 
@@ -108,16 +102,64 @@ const displayMovements = function (movements) {
   });
 };
 
-displayMovements(account1.movements);
-
 // Balance calculation
 
 const calcDisplayBalance = function (movements) {
   const balance: number = movements.reduce((acc, cur) => acc + cur, 0);
-  labelBalance.textContent = `${balance} EUR`;
+  labelBalance.textContent = `${balance} €`;
 };
 
-calcDisplayBalance(account1.movements);
+//Summary calculation
+
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements
+    .filter(mov => mov > 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumIn.textContent = `${incomes} €`;
+
+  const out = acc.movements
+    .filter(mov => mov < 0)
+    .reduce((acc, cur) => acc + cur, 0);
+  labelSumOut.textContent = `${Math.abs(out)} €`;
+
+  const interest = acc.movements
+    .filter(mov => mov > 0)
+    .map(deposit => (deposit * acc.interestRate) / 100)
+    .filter((int, i, arr) => {
+      return int >= 1;
+    })
+    .reduce((acc, int) => acc + int, 0);
+  labelSumInterest.textContent = `${Math.abs(interest)} €`;
+};
+
+// Event handler
+
+btnLogin.addEventListener('click', function (e) {
+  e.preventDefault(); //zapobiega odświeżaniu się strony po naciśnięciu buttona
+
+  currentAccount = accounts.find(
+    acc => acc.username === inputLoginUsername.value
+  );
+  console.log(currentAccount);
+
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    labelWelcome.textContent = `Welcome back, ${
+      currentAccount.owner.split(' ')[0]
+    }`;
+
+    containerApp.style.opacity = 100;
+
+    inputLoginUsername.value = inputLoginPin.value = '';
+
+    inputLoginPin.blur();
+
+    displayMovements(currentAccount.movements);
+
+    calcDisplayBalance(currentAccount.movements);
+
+    calcDisplaySummary(currentAccount);
+  }
+});
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
